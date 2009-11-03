@@ -49,7 +49,7 @@ public class Mappings {
                     return aClass;
                 }
                 if (method.getDeclaringClass() == MapperMarker.class && method.getName().equals("getNodeType")) {
-                    return MappingNode.src;
+                    return MapperMarker.MappingNode.src;
                 }
                 if (!shouldRecordMethod(method)) {
                     return proxy.invokeSuper(obj, args);
@@ -75,7 +75,7 @@ public class Mappings {
                     return aClass;
                 }
                 if (method.getDeclaringClass() == MapperMarker.class && method.getName().equals("getNodeType")) {
-                    return MappingNode.dest;
+                    return MapperMarker.MappingNode.dest;
                 }
                 if (!shouldRecordMethod(method)) {
                     return proxy.invokeSuper(obj, args);
@@ -114,6 +114,7 @@ public class Mappings {
         if (src instanceof MapperMarker) {
             checkMappingDone();
             MapperMarker mapperInfo = (MapperMarker) src;
+            if (mapperInfo.getNodeType() != MapperMarker.MappingNode.src) throw new MappingException("you passed a 'mapping destination' object in the from statement");
             Class srcClazz = mapperInfo.getTargetClass();
             ongoingMapping.setSrcClass(srcClazz);
         }

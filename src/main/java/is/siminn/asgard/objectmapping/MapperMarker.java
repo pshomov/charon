@@ -22,8 +22,9 @@ Inital version of this file contributed by Síminn hf. (http://www.siminn.is)
 */
 package is.siminn.asgard.objectmapping;
 
-enum MappingNode{src, dest}
 public interface MapperMarker {
     Class getTargetClass();
-    MappingNode getNodeType(); 
+    MappingNode getNodeType();
+
+    static enum MappingNode{src, dest}
 }

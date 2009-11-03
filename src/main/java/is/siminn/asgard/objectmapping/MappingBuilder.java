@@ -49,6 +49,8 @@ public class MappingBuilder<T> implements UserMappingBuilder<T> {
     }
 
     public <Z> Z to(Z o) {
+        MapperMarker mapperInfo = (MapperMarker) o;
+        if (mapperInfo.getNodeType() != MapperMarker.MappingNode.dest) throw new MappingException("you passed a 'mapping source' object in the 'to' statement");
         return o;
     }
 
