@@ -48,6 +48,9 @@ public class Mappings {
                 if (method.getDeclaringClass() == MapperMarker.class && method.getName().equals("getTargetClass")) {
                     return aClass;
                 }
+                if (method.getDeclaringClass() == MapperMarker.class && method.getName().equals("getNodeType")) {
+                    return MappingNode.src;
+                }
                 if (!shouldRecordMethod(method)) {
                     return proxy.invokeSuper(obj, args);
                 }
@@ -64,9 +67,16 @@ public class Mappings {
     public static <T> T dest(final Class<T> aClass) {
         Enhancer e = new Enhancer();
         e.setSuperclass(aClass);
+        e.setInterfaces(new Class[]{MapperMarker.class});
         e.setCallback(new MethodInterceptor() {
 
             public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
+                if (method.getDeclaringClass() == MapperMarker.class && method.getName().equals("getTargetClass")) {
+                    return aClass;
+                }
+                if (method.getDeclaringClass() == MapperMarker.class && method.getName().equals("getNodeType")) {
+                    return MappingNode.dest;
+                }
                 if (!shouldRecordMethod(method)) {
                     return proxy.invokeSuper(obj, args);
                 }
@@ -77,6 +87,27 @@ public class Mappings {
         });
 
         return (T) e.create();
+    }
+
+    public static void automap(Object src, Object dest) {
+        MapperMarker srcNodeInfo = (MapperMarker) src;
+        MapperMarker destNodeInfo = (MapperMarker) dest;
+        for (Method method : srcNodeInfo.getTargetClass().getMethods()) {
+                if (method.getName().startsWith("get")){
+                    try {
+                        final Method setter = destNodeInfo.getTargetClass().getMethod(method.getName().replaceFirst("get", "set"), method.getReturnType());
+                        if ((setter.getParameterTypes()[0] == method.getReturnType())) {
+                            ongoingMapping.setSrcClass(srcNodeInfo.getTargetClass());
+                            ongoingMapping.setSrcMethod(method);
+                            ongoingMapping.setDestClass(destNodeInfo.getTargetClass());
+                            ongoingMapping.setDestMethod(setter);
+                            checkMappingDone();
+                        }
+                    } catch (NoSuchMethodException e) {
+                        continue;
+                    }
+                }
+        }
     }
 
     public static <Src> UserMappingBuilder<Src> from(Src src) {
@@ -100,7 +131,7 @@ public class Mappings {
 
     public static <Dest> Dest transform(final Object src, Dest dest, Map projectionContext) {
         checkMappingDone();
-        if(projectionContext==null) projectionContext = Collections.EMPTY_MAP;
+        if (projectionContext == null) projectionContext = Collections.EMPTY_MAP;
 
         if (src == null || dest == null) return dest;
         List<BaseMappingOperation> operations = transformations.query(src.getClass(), dest.getClass());
