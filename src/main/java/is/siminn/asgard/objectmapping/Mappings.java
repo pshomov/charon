@@ -25,6 +25,9 @@ package is.siminn.asgard.objectmapping;
 import java.util.Map;
 
 @SuppressWarnings("ALL")
+/**
+ * This is just a syntactic sugar for the clients to avoid using instance varaibles for the mapping domain and its operations
+ */
 public class Mappings {
 
     static MappingsDSLBoot mappingDomain = new MappingsDSLBoot();
