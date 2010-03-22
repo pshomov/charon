@@ -22,12 +22,7 @@ Inital version of this file contributed by Síminn hf. (http://www.siminn.is)
 */
 package is.siminn.asgard.objectmapping.mappingoperations;
 
-import is.siminn.asgard.objectmapping.Filter;
-import is.siminn.asgard.objectmapping.MappingBuilder;
-import is.siminn.asgard.objectmapping.Mappings;
-import is.siminn.asgard.objectmapping.TransformationBase;
-import is.siminn.asgard.objectmapping.TransformationException;
-import is.siminn.asgard.objectmapping.TransformationContext;
+import is.siminn.asgard.objectmapping.*;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -94,7 +89,7 @@ public class GetterSetterMappingOperation extends BaseMappingOperation {
         Object srcObjectForMapping = getValueFromSourceGetter(src);
 
         Filter filter = getFilter();
-        if (MappingBuilder.filterAllows(src, srcObjectForMapping, filter)) {
+        if (MapBuilder.filterAllows(src, srcObjectForMapping, filter)) {
             srcObjectForMapping = applyAllTransformations(new TransformationContext(srcObjectForMapping, projectionContext, src));
             callDestSetter(dest, srcObjectForMapping);
         }

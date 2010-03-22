@@ -33,19 +33,14 @@ import java.util.Collection;
 @SuppressWarnings("ALL") 
 public class MappingBuilder<T> implements UserMappingBuilder<T> {
 
-    private Method srcMethod;
-    private Class<T> srcClass;
-    private Method destMethod;
-    private Class<T> destClass;
-    private List<TransformationBase> transformations = new ArrayList<TransformationBase>();
-    private Filter filter;
+    private final MapBuilder<T> mapBuilder = new MapBuilder<T>(new ArrayList<TransformationBase>());
 
     public MappingBuilder(Class<T> srcClazz) {
-        this.srcClass = srcClazz;
+        this.mapBuilder.setSrcClass(srcClazz);
     }
 
     public MappingBuilder() {
-        srcClass = null;
+        mapBuilder.setSrcClass(null);
     }
 
     public <Z> Z to(Z o) {
@@ -55,37 +50,37 @@ public class MappingBuilder<T> implements UserMappingBuilder<T> {
     }
 
     public UserMappingBuilder<T> applyTransformation(TransformationBase<T> transformation) {
-        addTransformation(transformation);
+        mapBuilder.addTransformation(transformation);
         return this;
     }
 
     public UserMappingBuilder<T> applyFilter(Filter<T> filter) {
-        setFilter(filter);
+        mapBuilder.setFilter(filter);
         return this;
     }
 
     public <X> UserMappingBuilder<T> applyCollectionFilter(Filter<X> filter) {
-        setFilter(filter);
+        mapBuilder.setFilter(filter);
         return this;
     }
 
     public void toObject(Object destObj) {
         if(destObj instanceof MapperMarker){
             MapperMarker mm = (MapperMarker) destObj;
-            setDestClass(mm.getTargetClass());
+            mapBuilder.setDestClass(mm.getTargetClass());
         } else {
-            setDestClass((Class<T>) destObj.getClass());
+            mapBuilder.setDestClass((Class<T>) destObj.getClass());
         }
     }
 
     public <Z> void to(final Class<Z> clazz, Collection<Z> collection) {
-        transformations.add(new Transformation() {
+        mapBuilder.getTransformations().add(new Transformation() {
             public Object apply(Object input, Object context) {
                 List result = new ArrayList();
                 Collection srcCollection = (Collection) input;
                 for (Object srcCollectionItem : srcCollection) {
-                    if(filterAllows(context, srcCollectionItem, filter))
-                        result.add(transform(srcCollectionItem, createInstance(clazz)));
+                    if(MapBuilder.filterAllows(context, srcCollectionItem, mapBuilder.getFilter()))
+                        result.add(transform(srcCollectionItem, mapBuilder.createInstance(clazz)));
                 }
                 return result;
             }
@@ -93,85 +88,61 @@ public class MappingBuilder<T> implements UserMappingBuilder<T> {
     }
 
     private Object createInstance(Class<?> clazz) {
-        Object resultInstance;
-        try {
-            return clazz.newInstance();
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
+        return mapBuilder.createInstance(clazz);
     }
 
     void setSrcMethod(Method method) {
-        this.srcMethod = method;
+        mapBuilder.setSrcMethod(method);
     }
 
     void setSrcClass(Class<T> srcClass) {
-        this.srcClass = srcClass;
+        mapBuilder.setSrcClass(srcClass);
     }
 
     void setDestMethod(Method destMethod) {
-        this.destMethod = destMethod;
+        mapBuilder.setDestMethod(destMethod);
     }
 
 
     void setDestClass(Class<T> destClass) {
-        this.destClass = destClass;
+        mapBuilder.setDestClass(destClass);
     }
 
     Method getSrcMethod() {
-        return srcMethod;
+        return mapBuilder.getSrcMethod();
     }
 
     public boolean isMappingComplete() {
-        return getDestMethod() != null;
-    }      
+        return mapBuilder.isMappingComplete();
+    }
 
     private boolean isMappingStarted() {
-        return getSrcMethod() != null;
+        return mapBuilder.isMappingStarted();
     }
 
     private void addTransformation(TransformationBase transformation) {
-        if (!isMappingComplete()) {
-            transformations.add(transformation);
-        } else {
-            throw new TransformationException("You cannot register a transformation at this point. Did you call registerTransformation out of band?");
-        }
+        mapBuilder.addTransformation(transformation);
     }
 
     private void setFilter(Filter filter) {
-        if (isMappingStarted() && !isMappingComplete()) {
-            this.filter = filter;
-        } else {
-            throw new TransformationException("You cannot register a filter at this point. Did you call registerFilter out of band?");
-        }
+        mapBuilder.setFilter(filter);
     }
 
     Method getDestMethod() {
-        return destMethod;
+        return mapBuilder.getDestMethod();
     }
 
     Class getSrcClass() {
-        return srcClass;
+        return mapBuilder.getSrcClass();
     }
 
     Class getDestClass() {
-        return destClass;
+        return mapBuilder.getDestClass();
     }
 
     GetterSetterMappingOperation constructMapping() {
-        GetterSetterMappingOperation result = new GetterSetterMappingOperation();
-        result.setDestMethod(destMethod);
-        result.setSrcMethod(srcMethod);
-        result.setFilter(filter);
-        result.addAllTransformations(transformations);
-        return result;
 
+        return mapBuilder.constructMapping();
     }
 
-    public static boolean filterAllows(Object context, Object input, Filter filter) {
-        //noinspection unchecked
-        return filter == null || filter.allow(input, context);
-    }
 }
